@@ -3,12 +3,8 @@
 """
 Vigia de entradas del Gran Torneo de Sumo de Tokio (septiembre 2026).
 Comprueba buysumotickets.com para el sabado 26 (Day 14) y el domingo 27 (Day 15),
-con 2 y 4 personas (los palcos masu se venden por caja de 4 y con 2 se ocultan).
-Si aparece CUALQUIER "tournament ticket type", envia un push a ntfy.
-
-Disenado para correr en GitHub Actions (cron cada ~30 min). No necesita el
-ordenador de Alberto encendido. El topic de ntfy se pasa por la variable de
-entorno NTFY_TOPIC (guardada como secreto del repo).
+con 2 y 4 personas. Si aparece CUALQUIER "tournament ticket type", envia push a ntfy.
+Corre en GitHub Actions (cron ~30 min). NTFY_TOPIC viene por variable de entorno.
 """
 import os
 import requests
@@ -43,7 +39,13 @@ def check():
         browser = p.chromium.launch()
         page = browser.new_page(locale="en-US")
         page.set_default_timeout(30000)
-        page.goto(URL, wait_until="networkidle")
+        try:
+            page.goto(URL, wait_until="domcontentloaded", timeout=60000)
+            page.wait_for_timeout(4000)
+        except Exception as e:
+            print(f"AVISO: no se pudo cargar la pagina ({e}); se omite esta pasada.")
+            browser.close()
+            return available
 
         body0 = page.inner_text("body").lower()
         if "ticket types" not in body0 and "date" not in body0:
