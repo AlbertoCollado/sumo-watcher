@@ -2,8 +2,16 @@ name: sumo-watch
 
 on:
   schedule:
+    # A) Vigilancia (sumo + Nintendo) cada 30 min, 24/7 (hora UTC). GitHub puede retrasarlo unos min.
     - cron: "*/30 * * * *"
-  workflow_dispatch: {}
+    # B) Recordatorios por fecha + resumen semanal, una vez al dia (07:05 UTC = 09:05 en Espana, verano).
+    - cron: "5 7 * * *"
+  workflow_dispatch:
+    inputs:
+      reminders:
+        description: "Forzar el envio de recordatorios ahora (true/false)"
+        required: false
+        default: "false"
 
 concurrency:
   group: sumo-watch
@@ -25,7 +33,9 @@ jobs:
           pip install --quiet playwright requests
           python -m playwright install --with-deps chromium
 
-      - name: Comprobar disponibilidad del sumo
+      - name: Vigilancia y recordatorios
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TRIGGER: ${{ github.event.schedule }}
+          FORCE_REMINDERS: ${{ github.event.inputs.reminders }}
         run: python check_sumo.py
