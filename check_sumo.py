@@ -15,7 +15,7 @@ from playwright.sync_api import sync_playwright
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "").strip()
 
 SUMO_URL = "https://buysumotickets.com/shop/tokyo-september"
-DAYS = ["Day 14", "Day 15"]
+DAYS = ["Day 14"]  # solo el sabado 26 (el domingo 27 por la tarde es el Museo Ghibli)
 PEOPLE = ["2", "4"]
 NEG = "no tournament ticket types open for orders"
 
@@ -25,8 +25,6 @@ NINTENDO_DATE = "2026-09-17"
 # Recordatorios: (fecha_apertura_ISO, alto_riesgo, titulo_ASCII, cuerpo_UTF8)
 # alto_riesgo -> avisa D-2, D-1 y D ; normal -> avisa D-1 y D.
 REMINDERS = [
-    ("2026-08-10", True,  "Museo Ghibli",
-     "Venta del Museo Ghibli (para el 27 sep): abre el 10 de agosto a las 10:00 JST (03:00 Espana). Se agota en horas; pon una alarma. ghibli-museum.jp / Lawson Ticket."),
     ("2026-08-11", False, "Tren Kagayaki",
      "Reserva del shinkansen Kagayaki Tokio-Kanazawa (11 sep): se abre el 11 de agosto (1 mes antes). App SmartEX."),
     ("2026-08-12", True,  "Shibuya Sky",
@@ -177,10 +175,9 @@ def run_reminders():
             d = date.fromisoformat(iso)
             if d >= today:
                 prox.append(f"{d.strftime('%d/%m')} {title}")
-        resumen = ("HECHO: alojamientos, teamLab Biovortex, 21st Century, Chichu/Benesse/Lee Ufan. "
-                   "EN VIGILANCIA: sumo (26/27) y Nintendo (17). "
-                   "SIN FECHA FIJA: taller Mokuhankan (8 sep), te Camellia (15), "
-                   "e-bikes + Minamidera Naoshima (20), cena de despedida (27). ")
+        resumen = ("HECHO: alojamientos, teamLab Biovortex, 21st Century, Chichu/Benesse/Lee Ufan, Ghibli. "
+                   "EN VIGILANCIA: sumo (26) y Nintendo (17). "
+                   "SIN FECHA FIJA: taller Mokuhankan (8 sep), te Camellia (15), cena de despedida (27). ")
         if prox:
             resumen += "Proximas aperturas: " + " | ".join(prox) + "."
         notify(title="Resumen semanal Japon", body=resumen, priority="low", tags="jp")
@@ -197,19 +194,16 @@ def main():
     hits = check_sumo()
     dias = sorted({d for (d, _) in hits})
     if dias:
-        cuales = " y ".join(
-            {"Day 14": "sabado 26", "Day 15": "domingo 27"}.get(d, d) for d in dias
-        )
         notify(
             title="SUMO disponible!",
-            body=(f"Han aparecido entradas de torneo del sumo para {cuales}. "
-                  f"Compra YA en buysumotickets.com/shop/tokyo-september o en Ticket Oosumo. "
-                  f"Ojo: no se pueden cancelar tras comprar."),
+            body=("Han aparecido entradas de torneo del sumo para el sabado 26. "
+                  "Compra YA en buysumotickets.com/shop/tokyo-september o en Ticket Oosumo. "
+                  "Ojo: no se pueden cancelar tras comprar."),
             priority="urgent", tags="sports_medal,jp",
         )
         print("ALERTA SUMO ENVIADA")
     else:
-        print("Sin disponibilidad de torneo (26 ni 27).")
+        print("Sin disponibilidad de torneo (sabado 26).")
 
     if check_nintendo():
         notify(
