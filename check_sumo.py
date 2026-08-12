@@ -25,24 +25,18 @@ NINTENDO_DATE = "2026-09-17"
 # Recordatorios: (fecha_apertura_ISO, alto_riesgo, titulo_ASCII, cuerpo_UTF8)
 # alto_riesgo -> avisa D-2, D-1 y D ; normal -> avisa D-1 y D.
 REMINDERS = [
-    ("2026-08-11", False, "Tren Kagayaki",
-     "Reserva del shinkansen Kagayaki Tokio-Kanazawa (11 sep): se abre el 11 de agosto (1 mes antes). App SmartEX."),
-    ("2026-08-12", True,  "Shibuya Sky",
-     "Venta de Shibuya Sky para el 9 sep (~4 semanas antes), franja del atardecer ~18:00. Se agota rapido; reserva en cuanto abra."),
-    ("2026-08-13", False, "Shirakawa-go y teamLab",
-     "Hoy toca: bus Hokutetsu a Shirakawa-go (13 sep) y entradas de teamLab Borderless (10 sep)."),
+    ("2026-08-13", True,  "Bus Shirakawa-go y Nozomi",
+     "HOY abre el bus de Shirakawa-go del 13 sep (ventana de 1 mes justo, rodante): reserva ida 8:40 y vuelta ~13:00-13:30 en Japan Bus Online. Y si no lo hiciste ya: los dos Nozomi (18 y 21 sep) llevan tiempo a la venta en SmartEX (vende desde 1 ano antes)."),
     ("2026-08-14", True,  "Kabukiza",
      "Venta general del Kabukiza: 14 de agosto a las 10:00 JST (03:00 Espana). Funcion de la NOCHE del 10 sep. kabukiweb.net. Pon una alarma."),
-    ("2026-08-18", False, "Tren Kioto-Kurashiki",
-     "Reserva del Nozomi Kioto-Kurashiki (18 sep): se abre el 18 de agosto (Silver Week, recomendado). SmartEX."),
-    ("2026-08-21", True,  "TREN CRITICO Hiroshima",
-     "Reserva YA el Nozomi Okayama-Hiroshima (21 sep): abre el 21 de agosto a las 10:00 JST (03:00 Espana). Es el tren imprescindible de Silver Week. Pon una alarma."),
-    ("2026-08-24", False, "Trenes al vuelo",
-     "Opcional: si quieres asiento asegurado, reserva ya los trenes al vuelo del regreso (Thunderbird 14, Hiroshima-Osaka 23, Osaka-Tokio 25). SmartEX."),
+    ("2026-08-18", False, "Chequeo transportes",
+     "Chequeo: si aun no has reservado el bus de Shirakawa-go (13 sep) y los dos Nozomi (18 y 21 sep), hazlo ya. Silver Week se llena."),
+    ("2026-08-26", True,  "Shibuya Sky",
+     "Venta de Shibuya Sky para el 9 sep: abre 14 dias antes, a las 00:00 JST del 26 ago = 17:00 de Espana del martes 25. Franja del atardecer ~17:30-18:00. Se agota en minutos; entra a las 17:00 en punto."),
     ("2026-09-01", False, "Repaso final",
-     "Repaso: tabla de mareas de Miyajima (22 sep), prevision de tifones, cartelera de conciertos y reservar la subida al Umeda Sky (24 sep)."),
+     "Repaso: tabla de mareas de Miyajima (22 sep), prevision de tifones, cartelera de conciertos, reservar la subida al Umeda Sky (24 sep) y COMPROBAR que las dos PASMO estan creadas y vinculadas al e-ticket del Kagayaki (Eki-net, historial de compras). Recuerda: el numero completo de la PASMO solo se ve en la app oficial de PASMO (tocar la i), no en la Cartera."),
     ("2026-09-13", False, "Tren de manana",
-     "Manana Thunderbird Kaga-Kioto (14 sep): compra el billete hoy o manana en SmartEX o en estacion."),
+     "Manana Thunderbird Kaga-Kioto (14 sep): compra el billete en JR West (e5489) o en la estacion (NO SmartEX)."),
     ("2026-09-22", False, "Tren de manana",
      "Manana Hiroshima-Osaka (23 sep): compra el billete en SmartEX o en estacion."),
     ("2026-09-24", False, "Tren de manana",
@@ -175,9 +169,11 @@ def run_reminders():
             d = date.fromisoformat(iso)
             if d >= today:
                 prox.append(f"{d.strftime('%d/%m')} {title}")
-        resumen = ("HECHO: alojamientos, teamLab Biovortex, 21st Century, Chichu/Benesse/Lee Ufan, Ghibli. "
+        resumen = ("HECHO: alojamientos, tren Kagayaki (11 sep, 9:56), teamLab Biovortex, 21st Century, "
+                   "Chichu/Benesse/Lee Ufan, Minamidera + e-bikes, Ghibli. "
                    "EN VIGILANCIA: sumo (26) y Nintendo (17). "
-                   "SIN FECHA FIJA: taller Mokuhankan (8 sep), te Camellia (15), cena de despedida (27). ")
+                   "SIN FECHA FIJA: taller Mokuhankan (8 sep), te Camellia (15), cena de despedida (27). "
+                   "PENDIENTE TECNICO: vincular las dos PASMO al e-ticket del Kagayaki. ")
         if prox:
             resumen += "Proximas aperturas: " + " | ".join(prox) + "."
         notify(title="Resumen semanal Japon", body=resumen, priority="low", tags="jp")
