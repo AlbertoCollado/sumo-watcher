@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 Control de reservas del viaje a Japon (septiembre 2026), 100% en la nube.
-  A) VIGILANCIA (cada 30 min): SUMO (buysumotickets) y NINTENDO MUSEUM (calendario oficial).
+VUELOS: ida EY102/EY800 Madrid 7 sep 10:45 -> Narita 8 sep 12:45.
+        vuelta EY801 Narita 28 sep 18:00 -> Madrid 29 sep 08:10.
+  A) VIGILANCIA (cada 30 min): SUMO (buysumotickets). Nintendo ya conseguido (17 sep, 10:30).
   B) RECORDATORIOS por fecha, con antelacion (solo en la pasada diaria ~09:05 Espana).
   C) RESUMEN semanal (lunes).
 Todo se avisa por push a ntfy. NTFY_TOPIC viene por variable de entorno (secreto del repo).
@@ -19,28 +21,25 @@ DAYS = ["Day 14"]  # solo el sabado 26 (el domingo 27 por la tarde es el Museo G
 PEOPLE = ["2", "4"]
 NEG = "no tournament ticket types open for orders"
 
-NINTENDO_URL = "https://museum-tickets.nintendo.com/en/calendar"
-NINTENDO_DATE = "2026-09-17"
-
-# Recordatorios: (fecha_apertura_ISO, alto_riesgo, titulo_ASCII, cuerpo_UTF8)
+# Recordatorios: (fecha_ISO, alto_riesgo, titulo_ASCII, cuerpo_UTF8)
 # alto_riesgo -> avisa D-2, D-1 y D ; normal -> avisa D-1 y D.
 REMINDERS = [
-    ("2026-08-13", True,  "Bus Shirakawa-go y Nozomi",
-     "HOY abre el bus de Shirakawa-go del 13 sep (ventana de 1 mes justo, rodante): reserva ida 8:40 y vuelta ~13:00-13:30 en Japan Bus Online. Y si no lo hiciste ya: los dos Nozomi (18 y 21 sep) llevan tiempo a la venta en SmartEX (vende desde 1 ano antes)."),
-    ("2026-08-14", True,  "Kabukiza",
-     "Venta general del Kabukiza: 14 de agosto a las 10:00 JST (03:00 Espana). Funcion de la NOCHE del 10 sep. kabukiweb.net. Pon una alarma."),
-    ("2026-08-18", False, "Chequeo transportes",
-     "Chequeo: si aun no has reservado el bus de Shirakawa-go (13 sep) y los dos Nozomi (18 y 21 sep), hazlo ya. Silver Week se llena."),
     ("2026-08-26", True,  "Shibuya Sky",
      "Venta de Shibuya Sky para el 9 sep: abre 14 dias antes, a las 00:00 JST del 26 ago = 17:00 de Espana del martes 25. Franja del atardecer ~17:30-18:00. Se agota en minutos; entra a las 17:00 en punto."),
     ("2026-09-01", False, "Repaso final",
-     "Repaso: tabla de mareas de Miyajima (22 sep), prevision de tifones, cartelera de conciertos, reservar la subida al Umeda Sky (24 sep) y COMPROBAR que las dos PASMO estan creadas y vinculadas al e-ticket del Kagayaki (Eki-net, historial de compras). Recuerda: el numero completo de la PASMO solo se ve en la app oficial de PASMO (tocar la i), no en la Cartera."),
+     "Repaso: mareas de Miyajima (22), prevision de tifones y subida al Umeda Sky (24). Sin reservas pendientes salvo Shibuya Sky."),
+    ("2026-09-05", True,  "Antes de volar",
+     "Visit Japan Web ya esta hecho (los dos). Repaso de vispera: capturas de TODAS las reservas en el movil, PASMO con saldo, eSIM probada, adaptador y medicinas. El 8 aterrizais a las 12:45 y teneis KABUKI a las 16:00."),
     ("2026-09-13", False, "Tren de manana",
      "Manana Thunderbird Kaga-Kioto (14 sep): compra el billete en JR West (e5489) o en la estacion (NO SmartEX)."),
+    ("2026-09-20", False, "Tren de la manana siguiente",
+     "Esta noche, al volver de Naoshima: mira en la app el horario del tren Uno-Okayama de manana (pasa 1-2 veces por hora). De el depende el Nozomi a Hiroshima de las 10:45."),
     ("2026-09-22", False, "Tren de manana",
      "Manana Hiroshima-Osaka (23 sep): compra el billete en SmartEX o en estacion."),
     ("2026-09-24", False, "Tren de manana",
      "Manana Osaka-Tokio (25 sep): compra el billete en SmartEX o en estacion."),
+    ("2026-09-27", False, "Ultimo dia",
+     "Manana vuelo EY801 desde Narita T1 a las 18:00: check-out 11:00, maletas en recepcion, y salid de Shinjuku hacia las 13:15-13:30 (N'EX ~80 min) para estar en Narita a las 15:00."),
 ]
 
 
@@ -120,31 +119,6 @@ def check_sumo():
     return available
 
 
-def check_nintendo():
-    cls = None
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch()
-            page = browser.new_page(locale="en-US")
-            page.set_default_timeout(30000)
-            page.goto(NINTENDO_URL, wait_until="domcontentloaded", timeout=60000)
-            page.wait_for_selector(f'td[data-date="{NINTENDO_DATE}"]', timeout=30000)
-            page.wait_for_timeout(1500)
-            cls = page.locator(f'td[data-date="{NINTENDO_DATE}"]').first.get_attribute("class")
-            browser.close()
-    except Exception as e:
-        print(f"AVISO NINTENDO: no se pudo comprobar ({e}); se omite.")
-        return False
-    cls = (cls or "").lower()
-    closed = any(k in cls for k in ["closed", "holiday", "disabled", "no-date", "past", "other-month"])
-    soldout = "soldout" in cls or "sold-out" in cls
-    if cls and (not soldout) and (not closed):
-        print(f"NINTENDO POSIBLE DISPONIBILIDAD ({NINTENDO_DATE}) class={cls}")
-        return True
-    print(f"nintendo agotado/cerrado ({NINTENDO_DATE}) class={cls}")
-    return False
-
-
 def run_reminders():
     try:
         from zoneinfo import ZoneInfo
@@ -169,13 +143,15 @@ def run_reminders():
             d = date.fromisoformat(iso)
             if d >= today:
                 prox.append(f"{d.strftime('%d/%m')} {title}")
-        resumen = ("HECHO: alojamientos, tren Kagayaki (11 sep, 9:56), teamLab Biovortex, 21st Century, "
-                   "Chichu/Benesse/Lee Ufan, Minamidera + e-bikes, Ghibli. "
-                   "EN VIGILANCIA: sumo (26) y Nintendo (17). "
-                   "SIN FECHA FIJA: taller Mokuhankan (8 sep), te Camellia (15), cena de despedida (27). "
-                   "PENDIENTE TECNICO: vincular las dos PASMO al e-ticket del Kagayaki. ")
+        resumen = ("HECHO: alojamientos, KABUKI (8 sep 16:00), tren Kagayaki (11 sep 9:56), "
+                   "bus Shirakawa-go (13 sep, 8:40 y 15:10), los DOS NOZOMI de Silver Week (18 y 21 sep, SmartEX), "
+                   "teamLab Biovortex, 21st Century, MUSEO NINTENDO (17, 10:30), "
+                   "Chichu/Benesse/Lee Ufan, Minamidera + e-bikes, Ghibli (27, 14:00). "
+                   "EN VIGILANCIA: solo el sumo (26). "
+                   "PENDIENTE: solo Shibuya Sky (25 ago 17:00). Transporte cerrado y Visit Japan Web hecho. La cena de despedida va sin reserva. "
+                   "TECNICO: PASMO creadas y vinculadas al e-ticket; Visit Japan Web hecho por los dos. ")
         if prox:
-            resumen += "Proximas aperturas: " + " | ".join(prox) + "."
+            resumen += "Proximas fechas: " + " | ".join(prox) + "."
         notify(title="Resumen semanal Japon", body=resumen, priority="low", tags="jp")
         print("resumen semanal enviado")
 
@@ -186,8 +162,16 @@ def main():
         or os.environ.get("FORCE_REMINDERS", "").lower() == "true"
     )
 
-    # --- A) VIGILANCIA (siempre) ---
-    hits = check_sumo()
+    # --- A) VIGILANCIA (hasta el dia del torneo; luego se apaga sola) ---
+    try:
+        from zoneinfo import ZoneInfo
+        hoy = datetime.now(ZoneInfo("Europe/Madrid")).date()
+    except Exception:
+        hoy = datetime.utcnow().date()
+
+    hits = check_sumo() if hoy <= date(2026, 9, 26) else []
+    if hoy > date(2026, 9, 26):
+        print("Torneo pasado: vigilancia de sumo desactivada.")
     dias = sorted({d for (d, _) in hits})
     if dias:
         notify(
@@ -200,16 +184,6 @@ def main():
         print("ALERTA SUMO ENVIADA")
     else:
         print("Sin disponibilidad de torneo (sabado 26).")
-
-    if check_nintendo():
-        notify(
-            title="Nintendo Museum disponible!",
-            body=("Ha aparecido disponibilidad para el Museo Nintendo el jueves 17 de septiembre "
-                  "(posible cancelacion). Compra YA por orden de llegada en "
-                  "museum-tickets.nintendo.com/en/calendar."),
-            priority="urgent", tags="video_game,jp",
-        )
-        print("ALERTA NINTENDO ENVIADA")
 
     # --- B) y C) RECORDATORIOS + RESUMEN (solo pasada diaria o forzado) ---
     if run_rem:
