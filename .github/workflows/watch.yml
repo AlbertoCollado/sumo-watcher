@@ -2,7 +2,7 @@ name: sumo-watch
 
 on:
   schedule:
-    # A) Vigilancia (sumo + Nintendo) cada 30 min, 24/7 (hora UTC). GitHub puede retrasarlo unos min.
+    # A) Vigilancia del sumo cada 30 min, 24/7 (hora UTC). Se apaga sola tras el 26 sep 2026.
     - cron: "*/30 * * * *"
     # B) Recordatorios por fecha + resumen semanal, una vez al dia (07:05 UTC = 09:05 en Espana, verano).
     - cron: "5 7 * * *"
